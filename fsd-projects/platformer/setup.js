@@ -4,7 +4,7 @@ const gravity = 0.5; // how much is subtracted from speedY each frame
 const friction = 1.5; // how much the player is slowed each frame
 const maxSpeed = 8; // maximum horizontal speed, not vertical
 const playerJumpStrength = 12; // this is subtracted from the speedY each jump
-const projectileSpeed = 8; // the speed of projectiles
+const projectileSpeed = 2; // the speed of projectiles
 let shouldDrawGrid = false;
 let gridMade = false;
 
@@ -32,8 +32,12 @@ const player = {
 
 let hitDx;
 let hitDy;
-let hitBoxWidth = 50 * playerScale;
-let hitBoxHeight = 105 * playerScale;
+// base hitbox sizes (scaled by playerScale)
+let baseHitBoxWidth = 50 * playerScale;
+let baseHitBoxHeight = 105 * playerScale;
+let hitBoxWidth = baseHitBoxWidth;
+let hitBoxHeight = baseHitBoxHeight;
+let hitBoxTop = undefined;
 let firstTimeSetup = true;
 
 const keyPress = {

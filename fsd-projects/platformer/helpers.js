@@ -35,6 +35,16 @@ function main() {
   player.x += player.speedX;
   player.y += player.speedY;
 
+  // adjust hitbox when crouching (shrink only the top so bottom stays fixed)
+  // compute hitbox height and top; do NOT change player.y
+  const desiredHitBoxHeight = keyPress.down
+    ? baseHitBoxHeight * 0.6
+    : baseHitBoxHeight;
+  hitBoxWidth = baseHitBoxWidth; // width remains constant
+  hitBoxHeight = desiredHitBoxHeight;
+  // keep bottom fixed relative to player.y by moving the hitbox top down
+  hitBoxTop = player.y + (baseHitBoxHeight - hitBoxHeight);
+
   collision(); //checks if the player will collide with something in this frame
   keyboardControlActions(); //keyboard controls.
   projectileCollision(); //checks if the player is getting hit by a projectile in the next frame
@@ -152,7 +162,7 @@ function debug() {
   ctx.fillRect(500, 100, 50, 50);
 
   ctx.fillStyle = "green";
-  ctx.fillRect(player.x, player.y, hitBoxWidth, hitBoxHeight);
+  ctx.fillRect(player.x, hitBoxTop, hitBoxWidth, hitBoxHeight);
 
   if (collision() !== undefined) {
     ctx.fillStyle = "yellow";
@@ -233,7 +243,7 @@ function drawRobot() {
       player.x - hitDx,
       player.y - hitDy,
       player.width,
-      player.height
+      player.height,
     );
   } else {
     //for running to the left you mirror the image
@@ -248,7 +258,7 @@ function drawRobot() {
       -player.x - player.width + hitDx,
       player.y - hitDy,
       player.width,
-      player.height
+      player.height,
     );
     ctx.restore(); //put the canvas back to normal
   }
@@ -262,15 +272,15 @@ function collision() {
     if (
       player.x + hitBoxWidth > platforms[i].x &&
       player.x < platforms[i].x + platforms[i].width &&
-      player.y < platforms[i].y + platforms[i].height &&
-      player.y + hitBoxHeight > platforms[i].y
+      hitBoxTop < platforms[i].y + platforms[i].height &&
+      hitBoxTop + hitBoxHeight > platforms[i].y
     ) {
       //now that we know we have collided, we figure out the direction of collision
       result = resolveCollision(
         platforms[i].x,
         platforms[i].y,
         platforms[i].width,
-        platforms[i].height
+        platforms[i].height,
       );
     }
   }
@@ -283,7 +293,7 @@ function resolveCollision(objx, objy, objw, objh) {
   //found here https://stackoverflow.com/questions/38648693/resolve-collision-of-two-2d-elements
   //first we find the distance between the center of the object and the player
   let dx = player.x + hitBoxWidth / 2 - (objx + objw / 2);
-  let dy = player.y + hitBoxHeight / 2 - (objy + objh / 2);
+  let dy = hitBoxTop + hitBoxHeight / 2 - (objy + objh / 2);
 
   //get half-widths of each item
   let halfWidth = hitBoxWidth / 2 + objw / 2;
@@ -361,8 +371,8 @@ function projectileCollision() {
     if (
       projectiles[i].x < player.x + hitBoxWidth &&
       projectiles[i].x + projectiles[i].width > player.x &&
-      projectiles[i].y < player.y + hitBoxHeight &&
-      projectiles[i].y + projectiles[i].height > player.y
+      projectiles[i].y < hitBoxTop + hitBoxHeight &&
+      projectiles[i].y + projectiles[i].height > hitBoxTop
     ) {
       currentAnimationType = animationTypes.frontDeath;
       frameIndex = 0;
@@ -378,8 +388,8 @@ function badPlatformCollision() {
     if (
       player.x + hitBoxWidth > badPlatforms[i].x &&
       player.x < badPlatforms[i].x + badPlatforms[i].width &&
-      player.y < badPlatforms[i].y + badPlatforms[i].height &&
-      player.y + hitBoxHeight > badPlatforms[i].y
+      hitBoxTop < badPlatforms[i].y + badPlatforms[i].height &&
+      hitBoxTop + hitBoxHeight > badPlatforms[i].y
     ) {
       currentAnimationType = animationTypes.frontDeath;
       frameIndex = 0;
@@ -393,7 +403,7 @@ function deathOfPlayer() {
     canvas.width / 4,
     canvas.height / 6,
     canvas.width / 2,
-    canvas.height / 2
+    canvas.height / 2,
   );
   ctx.fillStyle = "black";
   ctx.font = "800% serif";
@@ -401,14 +411,14 @@ function deathOfPlayer() {
     "You are dead",
     canvas.width / 4,
     canvas.height / 6 + canvas.height / 5,
-    (canvas.width / 16) * 14
+    (canvas.width / 16) * 14,
   );
   ctx.font = "500% serif";
   ctx.fillText(
     "Hit any key to restart",
     canvas.width / 4,
     canvas.height / 6 + canvas.height / 3,
-    (canvas.width / 16) * 14
+    (canvas.width / 16) * 14,
   );
   if (keyPress.any) {
     keyPress.any = false;
@@ -509,7 +519,7 @@ function makeGrid() {
     ctx.fillText(
       i, // text
       i - 15, // x location
-      25 // y location
+      25, // y location
     );
   }
 
@@ -523,7 +533,7 @@ function makeGrid() {
     ctx.fillText(
       i, // text
       10, // x location
-      i + 5 // y location
+      i + 5, // y location
     );
   }
   gridMade = true;
@@ -536,7 +546,7 @@ function drawProjectiles() {
       projectiles[i].x,
       projectiles[i].y,
       projectiles[i].width,
-      projectiles[i].height
+      projectiles[i].height,
     );
     projectiles[i].x = projectiles[i].x + projectiles[i].speedX;
     projectiles[i].y = projectiles[i].y + projectiles[i].speedY;
@@ -552,7 +562,7 @@ function drawCannons() {
         cannons[i].x,
         cannons[i].y,
         cannons[i].projectileWidth,
-        cannons[i].projectileHeight
+        cannons[i].projectileHeight,
       );
     } else {
       cannons[i].projectileCountdown = cannons[i].projectileCountdown + 1;
@@ -593,7 +603,7 @@ function drawCollectables() {
         collectables[i].x,
         collectables[i].y,
         collectableWidth,
-        collectableHeight
+        collectableHeight,
       );
     } else {
       //draw the icons at the top if collected
@@ -606,7 +616,7 @@ function drawCollectables() {
         200 + 100 * i,
         10,
         collectableWidth,
-        collectableHeight
+        collectableHeight,
       );
       ctx.globalAlpha = 1;
     }
@@ -651,8 +661,8 @@ function collectablesCollide() {
     if (
       collectables[i].x + collectableWidth > player.x &&
       collectables[i].x < player.x + hitBoxWidth &&
-      collectables[i].y < player.y + hitBoxHeight &&
-      collectables[i].y + collectableHeight > player.y
+      collectables[i].y < hitBoxTop + hitBoxHeight &&
+      collectables[i].y + collectableHeight > hitBoxTop
     ) {
       collectables[i].collected = true;
       checkForWin();
@@ -679,7 +689,7 @@ function winGame() {
     canvas.width / 4,
     canvas.height / 6,
     canvas.width / 2,
-    canvas.height / 2
+    canvas.height / 2,
   );
   ctx.fillStyle = "white";
   ctx.font = "800% serif";
@@ -687,14 +697,14 @@ function winGame() {
     "You Win!",
     canvas.width / 4,
     canvas.height / 6 + canvas.height / 5,
-    (canvas.width / 16) * 14
+    (canvas.width / 16) * 14,
   );
   ctx.font = "500% serif";
   ctx.fillText(
     "Hit any key to restart",
     canvas.width / 4,
     canvas.height / 6 + canvas.height / 3,
-    (canvas.width / 16) * 14
+    (canvas.width / 16) * 14,
   );
   if (keyPress.any) {
     keyPress.any = false;
@@ -713,7 +723,7 @@ function createPlatform(
   speedX = 1,
   minY = null,
   maxY = null,
-  speedY = 1
+  speedY = 1,
 ) {
   platforms.push({
     x,
@@ -760,7 +770,7 @@ function createCannon(
   height = defaultProjectileHeight,
   minPos = null,
   maxPos = null,
-  speed = 1
+  speed = 1,
 ) {
   if (wallLocation === "top") {
     cannons.push({
@@ -841,7 +851,7 @@ function createCollectable(
   bounce = 1,
   minX = null,
   maxX = null,
-  speed = 1
+  speed = 1,
 ) {
   if (type !== "") {
     var image = document.createElement("img");
