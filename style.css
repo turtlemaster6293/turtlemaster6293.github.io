@@ -101,6 +101,7 @@ h2 {
 }
 .sidebar-img {
     width: 100%;
+  
     max-width: 760px;
     aspect-ratio: 3 / 4;
     object-fit: cover;
@@ -108,7 +109,7 @@ h2 {
     border-radius: 16px;
     box-shadow: 0 8px 30px rgba(0, 0, 0, 0.12);
     transition: filter 0.4s ease, transform 0.4s ease, box-shadow 0.4s ease;
-    margin-top:-150px;
+    margin-top:10px;
 }
 
 .sidebar-img:hover {
